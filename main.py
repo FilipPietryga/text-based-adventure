@@ -1,5 +1,7 @@
 import msvcrt
 import os
+import csv
+import random
 
 class Coord:
     def __init__(self, x, y):
@@ -91,6 +93,12 @@ class Room:
                     self.content[entity.coord.y + coord.y][entity.coord.x + coord.x] = entity.symbol
                     self.content[entity.coord.y][entity.coord.x] = '.'
                     entity.move(coord)
+    
+    def hasEntity(self, coord):
+        for entity in self.entities:
+            if(entity.getX() == coord.x and entity.getY() == coord.y):
+                return True
+        return False
 
 class World:
     def __init__(self):
@@ -101,17 +109,11 @@ class World:
 
 playerCoord = Coord(2, 2)
 player = Player(playerCoord, '$')
-worldDimensions = Coord(10, 5)
-room1 = Room(worldDimensions)
-entity1 = Entity(Coord(7,3), 'A')
-entity2 = Entity(Coord(2,3), 'S')
-entity3 = Entity(Coord(4,2), 'A')
-entity4 = Entity(Coord(8,2), 'P')
-room1.append(player)
-room1.append(entity1)
-room1.append(entity2)
-room1.append(entity3)
-room1.append(entity4)
+width = 10
+height = 5
+worldDimensions = Coord(width, height)
+room = Room(worldDimensions)
+room.append(player)
 
 def clear():
     if os.name == 'nt':
@@ -119,15 +121,30 @@ def clear():
     else:
         _ = os.system('clear')
 
-while True:
-    clear()
-    room1.log()
-    input_char = msvcrt.getch()
-    switcher = {
-        b'D': Coord(1,0),
-        b'S': Coord(0,1),
-        b'A': Coord(-1,0),
-        b'W': Coord(0,-1)   
-    }
-    coord = switcher.get(input_char.upper(), Coord(0,0))
-    room1.movePlayer(coord)
+
+with open('words.txt') as file:
+    reader = csv.reader(file, delimiter=',')
+    words = []
+    for row in reader:
+        for item in row:
+            words.append(item)
+    word = random.choice(words)
+    for i in word:
+        coord = Coord(random.randint(1,width-2), random.randint(1,height-2))
+        entity = Entity(coord, i)
+        while(room.hasEntity(coord)):
+            coord = Coord(random.randint(1,width-2), random.randint(1,height-2))
+            entity = Entity(coord, i)
+        room.append(entity)
+    while True:
+        clear()
+        room.log()
+        input_char = msvcrt.getch()
+        switcher = {
+            b'D': Coord(1,0),
+            b'S': Coord(0,1),
+            b'A': Coord(-1,0),
+            b'W': Coord(0,-1)   
+        }
+        coord = switcher.get(input_char.upper(), Coord(0,0))
+        room.movePlayer(coord)
